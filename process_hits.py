@@ -2,15 +2,9 @@ import boto3
 import xmltodict
 import sys
 import os
+import json
 
-MTURK_SANDBOX = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
-
-mturk = boto3.client('mturk',
-   aws_access_key_id = "",
-   aws_secret_access_key = "",
-   region_name='us-east-1',
-   endpoint_url = MTURK_SANDBOX
-)
+from utils import get_mturk_client
 
 def get_hits(active_hits_file):
    active_hits = []
@@ -19,13 +13,13 @@ def get_hits(active_hits_file):
          active_hits.append(line.strip())
    return active_hits
 
-def process_hits(active_hits):
+def process_hits(mturk, active_hits):
 
    not_ready = []
 
    for line in active_hits:
       hit_id, url = line.split(',')
-      result = get_result(hit_id)
+      result = get_result(mturk,hit_id)
       if result==[]:
          not_ready.append(line)
       else:
@@ -41,13 +35,13 @@ def clean_up(hits_not_submitted):
       for line in hits_not_submitted:
          active_hits.write(line + "\n")
 
-def get_result(hit_id):
+def get_result(mturk, hit_id):
    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=['Submitted'])
 
    if worker_results['NumResults'] > 0:
       for assignment in worker_results['Assignments']:
          xml_doc = xmltodict.parse(assignment['Answer'])
-         
+
          if type(xml_doc['QuestionFormAnswers']['Answer']) is list:
             # Multiple fields in HIT layout
             for answer_field in xml_doc['QuestionFormAnswers']['Answer']:
@@ -66,5 +60,6 @@ def get_result(hit_id):
 
 if __name__ == "__main__":
    active_hits_file = sys.argv[1]
+   mturk = get_mturk_client()
    hits = get_hits(active_hits_file)
-   process_hits(hits)
+   process_hits(mturk,hits)
