@@ -1,0 +1,1 @@
+﻿Invoke-WebRequest -Uri "https://mnemicmturk.azurewebsites.net/api/UpdateMturkCosmos" -Method POST
