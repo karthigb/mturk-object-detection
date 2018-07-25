@@ -2,6 +2,7 @@ import boto3
 import sys
 
 from utils import get_mturk_client
+from sender import send_json, remove_json, create_mongo_client, get_collection
 
 HITLayoutId = '37L8ZID2LKFQS3ZWKNUJLKGGB9UDJR'
 
@@ -24,13 +25,18 @@ def run_batch_job(mturk,image_urls, labels):
 		new_hit = create_object_detection_hit(mturk,url,labels)
 		line = new_hit['HIT']['HITId'] + "," + url + "\n"
 		lines.append(line)
-		print "A new HIT has been created with HITId " + new_hit['HIT']['HITId']
+		print("A new HIT has been created with HITId " + new_hit['HIT']['HITId'])
 
-	print "https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId']
+		# Post this to CosmosDB
+		post_data = {
+			'id': new_hit['HIT']['HITId'],
+			'url': url
+		}
+		send_json(post_data, 'sandbox', 'active_hits')
 
-	with open("active_hits", "a") as active_hits:
-		for line in lines:
-			active_hits.write(line)
+
+
+	print("https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'])
 
 def create_object_detection_hit(mturk,image_url, labels):
 
@@ -59,9 +65,16 @@ def create_object_detection_hit(mturk,image_url, labels):
 	)
 
 	return new_hit
-
+'''
 if __name__ == "__main__":
     image_urls,labels = get_params(sys.argv[1],sys.argv[2])
     mturk = get_mturk_client()
-    print "Running batch job to label " + labels
+    print("Running batch job to label " + labels)
     run_batch_job(mturk,image_urls,labels)
+'''
+
+# Run with hardcoded values
+image_urls,labels = get_params('urls.txt', 'objects_to_find.txt')
+mturk = get_mturk_client()
+print("Running batch job to label " + labels)
+run_batch_job(mturk,image_urls,labels)
