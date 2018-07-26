@@ -1,23 +1,28 @@
 import boto3
 import sys
-import os
-import json
 
 from utils import get_mturk_client
 from sender import send_json, remove_json, create_mongo_client, get_collection
 
 HITLayoutId = '37L8ZID2LKFQS3ZWKNUJLKGGB9UDJR'
 
-def get_params(urls, labels):
-	image_urls = urls.split(",")
+def get_params(file_of_urls, file_of_labels):
+	image_urls = []
+	with open(file_of_urls, "r") as urls_file:
+	  for url in urls_file:
+	    image_urls.append(url.strip())
+
+	labels = ""
+	with open(file_of_labels, "r") as labels_file:
+		labels = labels_file.readline()
 
 	return image_urls,labels
 
-def run_batch_job(mturk,image_urls, labels,complete_time,expiration_time,reward):
+def run_batch_job(mturk,image_urls, labels):
 	lines = []
 
 	for url in image_urls:
-		new_hit = create_object_detection_hit(mturk,url,labels,complete_time,expiration_time,reward)
+		new_hit = create_object_detection_hit(mturk,url,labels)
 		line = new_hit['HIT']['HITId'] + "," + url + "\n"
 		lines.append(line)
 		print("A new HIT has been created with HITId " + new_hit['HIT']['HITId'])
@@ -34,7 +39,7 @@ def run_batch_job(mturk,image_urls, labels,complete_time,expiration_time,reward)
 
 	print("https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'])
 
-def create_object_detection_hit(mturk,image_url, labels,complete_time,expiration_time,reward):
+def create_object_detection_hit(mturk,image_url, labels):
 
 	HITLayoutParameters=[
 		{
@@ -53,10 +58,10 @@ def create_object_detection_hit(mturk,image_url, labels,complete_time,expiration
 		Title = 'Tag an image',
 		Description = 'Identify any of the following items in the picture: ' + labels + '.',
 		Keywords = 'image, quick, labeling, tagging',
-		Reward = reward,
+		Reward = '0.15',
 		MaxAssignments = 1,
-		LifetimeInSeconds = expiration_time * 60,
-		AssignmentDurationInSeconds = complete_time * 60,
+		LifetimeInSeconds = 7200,
+		AssignmentDurationInSeconds = 7200,
 		RequesterAnnotation = labels
 	)
 
@@ -70,25 +75,7 @@ if __name__ == "__main__":
 '''
 
 # Run with hardcoded values
-postreqdata = json.loads(open(os.environ['req']).read())
-
-# Sample Post Data
-'''
-postreqdata = {
-    "urls": "https://www.charlotteonthecheap.com/lotc-cms/wp-content/uploads/2015/04/mcdonalds-extra-value-meal.png,https://s3-us-west-2.amazonaws.com/cities.directory/compasseous.com/public_html/uploads/place_images/photos/f382487a2168080397c14bce3dc52839.png,https://d1nqx6es26drid.cloudfront.net/app/uploads/2015/04/08112410/ourfood-category-full-menu-mobile.jpg",
-    "labels": "burgers,fries,drink",
-    "complete_time": "120",
-    "expiration_time": "120",
-    "reward": "0.30"
-}
-'''
-urls = postreqdata['urls']
-labels = postreqdata['labels']
-complete_time = postreqdata['complete_time']
-expiration_time = postreqdata['expiration_time']
-reward = postreqdata['reward']
-
-image_urls,labels = get_params(urls, labels)
+image_urls,labels = get_params('urls.txt', 'objects_to_find.txt')
 mturk = get_mturk_client()
 print("Running batch job to label " + labels)
-run_batch_job(mturk,image_urls,labels,int(complete_time),int(expiration_time),reward)
+run_batch_job(mturk,image_urls,labels)
