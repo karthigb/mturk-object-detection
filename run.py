@@ -60,8 +60,8 @@ def create_object_detection_hit(mturk,image_url, labels):
 		Keywords = 'image, quick, labeling, tagging',
 		Reward = '0.15',
 		MaxAssignments = 1,
-		LifetimeInSeconds = 240,
-		AssignmentDurationInSeconds = 60,
+		LifetimeInSeconds = 7200,
+		AssignmentDurationInSeconds = 7200,
 		RequesterAnnotation = labels
 	)
 
