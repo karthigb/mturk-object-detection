@@ -30,6 +30,7 @@ def run_batch_job(mturk,image_urls, labels):
 		# Post this to CosmosDB
 		post_data = {
 			'id': new_hit['HIT']['HITId'],
+            'group_id': new_hit['HIT']['HITGroupId'],
 			'url': url
 		}
 		send_json(post_data, 'sandbox', 'active_hits')
