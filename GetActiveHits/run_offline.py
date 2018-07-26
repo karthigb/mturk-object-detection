@@ -65,7 +65,7 @@ def get_result(mturk, hit_id):
    return []
 
 
-group_id = '3T4QHDVBXBMXPURXXFR0TXGDMT3ZW7'
+group_id = '3ZPTEQNRP331JPW282B7S1AV3V7ZZX'
 mturk = get_mturk_client()
 hits = get_hits(group_id)
 results = process_hits(mturk,hits)

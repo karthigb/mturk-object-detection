@@ -27,7 +27,8 @@ def process_hits(mturk, active_hits):
              'value': json.loads(result)
          }
 
-         results.append(data) 
+         results.append(data)
+         send_json(data, 'sandbox', 'completed_hits') 
          
    return_value = {
        'active_hits': results
@@ -74,7 +75,7 @@ hits = get_hits(group_id)
 results = process_hits(mturk,hits)
 
 # Write JSON Response
-return_value = json.dumps(results)
-response = open(os.environ['res'], 'w')
-response.write(return_value)
-response.close()
+#return_value = json.dumps(results)
+#response = open(os.environ['res'], 'w')
+#response.write(return_value)
+#response.close()
