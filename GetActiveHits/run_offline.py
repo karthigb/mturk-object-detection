@@ -6,27 +6,33 @@ import json
 
 from utils import get_mturk_client
 
-def get_hits(active_hits_file):
-   active_hits = []
-   with open(active_hits_file, "r") as hits_file:
-      for line in hits_file:
-         active_hits.append(line.strip())
+from sender import send_json, remove_json, create_mongo_client, get_collection
+
+def get_hits(group_id):
+   active_hits = list(get_collection('sandbox', 'active_hits').find({'group_id': group_id}))
+
    return active_hits
 
 def process_hits(mturk, active_hits):
+   results = []
 
-   not_ready = []
-
-   for line in active_hits:
-      hit_id, url = line.split(',')
+   for hit in active_hits:
+      hit_id = hit['id']
       result = get_result(mturk,hit_id)
-      if result==[]:
-         not_ready.append(line)
-      else:
-         with open("output", "a") as output_file:
-            output_file.write(line + "," + result + "\n")
+      if result!=[]:
+         data = { 
+             'id': hit['id'],
+             'group_id': hit['group_id'],
+             'url': hit['url'],
+             'value': json.loads(result)
+         }
 
-   clean_up(not_ready)
+         results.append(data) 
+         
+   return_value = {
+       'active_hits': results
+   }
+   return return_value
 
 def clean_up(hits_not_submitted):
    os.remove("active_hits")
@@ -58,9 +64,10 @@ def get_result(mturk, hit_id):
    print(hit_id + " not ready")
    return []
 
-if __name__ == "__main__":
-   #active_hits_file = sys.argv[1]
-   active_hits_file = 'active_hits'
-   mturk = get_mturk_client()
-   hits = get_hits(active_hits_file)
-   process_hits(mturk,hits)
+
+group_id = '3ZPTEQNRP331JPW282B7S1AV3V7ZZX'
+mturk = get_mturk_client()
+hits = get_hits(group_id)
+results = process_hits(mturk,hits)
+
+return_value = json.dumps(results)
